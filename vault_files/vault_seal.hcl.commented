@@ -1,0 +1,7 @@
+# // seal stanza eg: seal "transit" ...
+# seal "awskms" {
+#  region     = "us-east-1"
+#  kms_key_id = "…-…-…-…-…"
+#  access_key = "AK…"
+#  secret_key = "n……………………"
+#}
