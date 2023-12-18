@@ -12,6 +12,21 @@ sHOME="/home/#{sVUSER}"  # // home path for vagrant user
 sPTH='cc.os.user-input'  # // path where scripts are expected
 sCA_CERT='cacert.crt'  # // Root CA certificate.
 
+## Patch UI to hide certian detailed messages making Vagrant outputs more concise
+class Vagrant::UI::Colored
+	def say(type, message, opts={})
+	aMSG_SKIP = [ 'Verifying vmnet devices', 'Preparing network adapters', 'Forwarding ports', 'Running provisioner: file...', 'Running provisioner: shell...' ]
+	if aMSG_SKIP.any? { |s| message.include? s } ; return ; end
+		aMSG_EXCLUDE = [ 'Verifying vmnet devices', 'Preparing network adapters', 'Forwarding ports', '-- 22 => 2222', 'SSH address:', 'SSH username', 'SSH auth method:', 'Vagrant insecure key detected.', 'this with a newly generated keypair', 'Inserting generated public', 'Removing insecure key from', 'Key inserted!']
+		# puts type," --- ",message
+		if aMSG_EXCLUDE.any? { |s| message.include? s } ## puts type, " --- ", message
+			super(type, message, opts.merge(hide_detail: true))
+		else
+			super(type, message, opts.merge(hide_detail: false))
+		end
+	end
+end
+
 Vagrant.configure("2") do |config|
 	#config.ssh.insert_key = false
 	config.vm.post_up_message = ""
@@ -30,6 +45,7 @@ Vagrant.configure("2") do |config|
 	# // VAULT Server Nodes & Consul Clients.
 	config.vm.define vm_name="vault1" do |vault_node|
 		vault_node.vm.hostname = vm_name
+		# vault_node.vm.network "forwarded_port", guest: 80, host: "48080", id: "#{vm_name}"
 
 		# // ORDERED: setup certs.
 		vault_node.vm.provision "file", source: "#{sPTH}/1.install_tls_ca_certs.sh", destination: "#{sHOME}/install_tls_ca_certs.sh"
